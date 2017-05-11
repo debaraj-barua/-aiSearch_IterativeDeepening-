@@ -8,17 +8,20 @@
  * */
 
 #include "agent.hpp"
-
+#include <algorithm>
 #include <iostream>
 #include <string>
 #include <unistd.h>
 #include <chrono>
 #include <thread>
-
+#include <stack>
 #define map_rows 25
 #define map_cols 141
 
 using namespace std;
+
+vector<pair<int,int>> explored;
+int goal_set;
 
 Agent::Agent
     (
@@ -45,10 +48,21 @@ Agent::~Agent()
 
 void Agent::run()
 {
+	//explored.clear();
     cout << "Running IDFS " << endl;
-    cout << "Number of goals " << number_of_goals << endl;
-    sleep(1);
-    //iterative_deepening_search();
+	sleep(1);
+
+    for (int i=0; i <number_of_goals;i++)
+    {
+    	explored.clear();
+    	cout<<"\n Looking for Goal Number: "<<i+1<<"\n";
+    	goal_set=i+1;
+    	print_map(map);
+    	iterative_deepening_search();
+    }
+
+//	iterative_deepening_search();
+
 }
 
 void Agent::print_map(vector<vector<string>>& a_map)
@@ -69,30 +83,140 @@ void Agent::print_map(vector<vector<string>>& a_map)
 }
 
 
+
 bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_level,
                           int limit, vector<pair<int,int>> current_path)
 {
-    //TODO
-    
+	current_level++;
+	std::string goal1=std::to_string(goal);
+
+	//TO DO
+
     //Notes: 
     //Backtrack from here once you have found a goal.
     //If you have found a goal, do not forget to get a fresh copy of the map.
     //Stop searching if you have found a goal or reached the depth limit.
     //Only return true if a goal has been found.
-    
-    return true;
+    int max_rows = map.size();
+    int max_cols = map[0].size();
+    bool result;
+
+
+
+	explored.push_back(current_node);
+
+	number_of_visited_nodes++;			//increase size of visited node as one node is being explored
+
+	int row = current_node.first;		//stores row index of current node
+	int col = current_node.second;		//stores column index of current node
+
+
+	if ((map[row][col]=="=") or (map[row][col]=="|") or (map[row][col]=="-"))
+	{
+		result=false;						//if the current node is either an obstacle;Or,
+											//previously explored node; Continue to next node;
+	}
+	else
+	{
+		if  (map[row][col]==goal1)
+		{
+
+			current_path.push_back(current_node);
+
+			backtrack_path(current_path);
+			return true;
+		}
+
+		/*********************************************************************
+		 * "If" statements below are used to find the children of current node
+		 * Child nodes which are legal and unexplored are added to stack
+		 *********************************************************************/
+		current_path.push_back(current_node);
+		if (((row+1)<max_rows and (row+1)>0) and ((map[row+1][col]!="=") and (map[row+1][col]!="|") and (map[row+1][col]!="-"))
+			 and	std::find(current_path.begin(), current_path.end(), make_pair(row+1, col)) == current_path.end()
+			 and	std::find(explored.begin(), explored.end(), make_pair(row+1, col)) == explored.end())
+		{
+
+			result=recursive_dls(make_pair(row+1, col), goal, current_level, limit, current_path);
+
+		}
+
+		if (((row-1)<max_rows and (row-1)>0)and ((map[row-1][col]!="=") and (map[row-1][col]!="|") and (map[row-1][col]!="-"))
+				 and	std::find(current_path.begin(), current_path.end(), make_pair(row-1, col)) == current_path.end()
+				 and	std::find(explored.begin(), explored.end(), make_pair(row-1, col)) == explored.end())
+		{
+			result=recursive_dls(make_pair(row-1, col), goal, current_level, limit, current_path);
+
+		}
+
+		if (((col+1)<max_cols and (col+1)>0)and ((map[row][col+1]!="=") and (map[row][col+1]!="|") and (map[row][col+1]!="-"))
+				 and	std::find(current_path.begin(), current_path.end(), make_pair(row, col+1)) == current_path.end()
+				 and	std::find(explored.begin(), explored.end(), make_pair(row, col+1)) == explored.end())
+		{
+			result=recursive_dls(make_pair(row, col+1), goal, current_level, limit, current_path);
+
+		}
+
+		if (((col-1)<max_cols and (col-1)>0)and ((map[row][col-1]!="=") and (map[row][col-1]!="|") and (map[row][col-1]!="-"))
+				 and	std::find(current_path.begin(), current_path.end(), make_pair(row, col-1)) == current_path.end()
+				 and	std::find(explored.begin(), explored.end(), make_pair(row, col-1)) == explored.end())
+		{
+			result=recursive_dls(make_pair(row, col-1), goal, current_level, limit, current_path);
+
+		}
+
+	}
+
+
+	if (result==true)
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+
 }
 
 bool Agent::depth_limited_seach(int limit)
 {
-    vector<pair<int,int>> current_path; 
-    //TODO
-    return true;
+    vector<pair<int,int>> current_path;
+    pair<int,int> current_node;
+	int goal, current_level;
+
+	current_node=make_pair(initial_pos.first, initial_pos.second);
+    current_path.push_back(current_node);
+	goal=goal_set;
+    //goal=1;
+	current_level=0;
+
+	bool result=recursive_dls(current_node, goal, current_level, limit, current_path);
+	if (result==true)
+		return true;
+	else
+		return false;
 }
 
 void Agent::iterative_deepening_search()
 {
     //TODO
+	int i;
+	bool result;
+
+	for (i=1; i<=max_limit; i++)
+	{
+
+		result=depth_limited_seach(i);
+
+		if (result==true)
+		{
+			break;
+		}
+
+	}
+
 }
 
 void Agent::print_final_results()
@@ -109,8 +233,14 @@ void Agent::backtrack_path(vector<pair<int,int>> current_path)
     
     pair<int,int> current_data; 
     //TODO
-    //Backtrace. Use the current path vector to set the path on the map. 
-    
+    //Backtrace. Use the current path vector to set the path on the map.
+    for (auto i = current_path.begin(); i != current_path.end(); i++)
+    {
+    	current_data=*i;
+    	local_map[current_data.first][current_data.second]="-";
+    	print_map(local_map);
+    }
+
     //print backtraced path
-    print_map(local_map);
+    //print_map(local_map);
 }
