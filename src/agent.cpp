@@ -1,5 +1,4 @@
 /*
- * Daniel Vazquez
  * Aritificial Intelligence for Robotics
  * SS 2016
  * Assignment 5
@@ -20,9 +19,11 @@
 
 using namespace std;
 
-vector<pair<int,int>> explored;
-pair<int,int> initial_pos_set;
-int goal_set;
+vector<vector<int>> depth_count_map; 	//--Used to check the last depth at which node was accessed.
+										//To get optimum path.
+pair<int,int> initial_pos_set;			//--Used to set the initial position
+int goal_set;							//--Used to set goal
+bool flag_check=true;					//Used to check for unsuccessful searches
 
 Agent::Agent
     (
@@ -50,16 +51,28 @@ Agent::~Agent()
 void Agent::run()
 {
 	//explored.clear();
+	flag_check=true;
     cout << "Running IDFS " << endl;
 	sleep(1);
 	initial_pos_set=initial_pos;
+	goal_set=0;
+	number_of_visited_nodes=0;
+
+	//Loop until all goals are found
     for (int i=0; i <number_of_goals;i++)
     {
-    	explored.clear();
-    	cout<<"\n Looking for Goal Number: "<<i+1<<"\n";
-    	goal_set=i+1;
+    	//explored.clear();
+
+    	goal_set=goal_set+1;
+    	cout<<"\n Looking for Goal Number: "<<goal_set<<"\n";
     	print_map(map);
     	iterative_deepening_search();
+    	if (flag_check==false)
+    	{
+			//goal_set=goal_set+1;
+			i=i-1;
+			flag_check=true;
+    	}
     	for (int x=0; x<map.size();x++)
     	{
     		for (int y=0;y<map[0].size();y++)
@@ -69,6 +82,10 @@ void Agent::run()
 
     		}
     	}
+       	print_final_results();
+		cout << "Press Enter to Continue" << endl;
+		cin.ignore();
+		cin.get();
     }
 
 //	iterative_deepening_search();
@@ -97,9 +114,6 @@ void Agent::print_map(vector<vector<string>>& a_map)
 bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_level,
                           int limit, vector<pair<int,int>> current_path)
 {
-	current_level++;
-	std::string goal1=std::to_string(goal);
-
 	//TO DO
 
     //Notes: 
@@ -107,32 +121,30 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
     //If you have found a goal, do not forget to get a fresh copy of the map.
     //Stop searching if you have found a goal or reached the depth limit.
     //Only return true if a goal has been found.
+
+	std::string goal1=std::to_string(goal);
     int max_rows = map.size();
     int max_cols = map[0].size();
     bool result=false;
 
-
-
-	explored.push_back(current_node);
-
+    //explored.push_back(current_node);
+    depth_count_map[current_node.first][current_node.second] = current_level;
 	number_of_visited_nodes++;			//increase size of visited node as one node is being explored
 
 	int row = current_node.first;		//stores row index of current node
 	int col = current_node.second;		//stores column index of current node
 
+	if(current_level>limit)
+	    {
+	    	return false;
+	    }
 
-	if ((map[row][col]=="=") or (map[row][col]=="|") or (map[row][col]=="-"))
-	{
-		result=false;						//if the current node is either an obstacle;Or,
-											//previously explored node; Continue to next node;
-	}
-	else
-	{
+
 		if  (map[row][col]==goal1)
 		{
 
 			current_path.push_back(current_node);
-
+			deepest_level=current_path.size();
 			backtrack_path(current_path);
 			return true;
 		}
@@ -142,44 +154,55 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 		 * Child nodes which are legal and unexplored are added to stack
 		 *********************************************************************/
 		current_path.push_back(current_node);
-		if (((row+1)<max_rows and (row+1)>0) and ((map[row+1][col]!="=") and (map[row+1][col]!="|") and (map[row+1][col]!="-"))
-			 and	std::find(current_path.begin(), current_path.end(), make_pair(row+1, col)) == current_path.end()
-			 and	std::find(explored.begin(), explored.end(), make_pair(row+1, col)) == explored.end())
+		if (((row+1)<max_rows and (row+1)>0) and ((map[row+1][col]!="=") and (map[row+1][col]!="|"))
+			 //and	std::find(current_path.begin(), current_path.end(), make_pair(row+1, col)) == current_path.end()
+			 //and	std::find(explored.begin(), explored.end(), make_pair(row+1, col)) == explored.end()
+			 and result!=true)
 		{
 
-			result=recursive_dls(make_pair(row+1, col), goal, current_level, limit, current_path);
-
+			if(depth_count_map[row+1][col] > current_level + 1)
+			{
+			result=recursive_dls(make_pair(row+1, col), goal, current_level+1, limit-1, current_path);
+			}
 		}
 
-		if (((row-1)<max_rows and (row-1)>0)and ((map[row-1][col]!="=") and (map[row-1][col]!="|") and (map[row-1][col]!="-"))
-				 and	std::find(current_path.begin(), current_path.end(), make_pair(row-1, col)) == current_path.end()
-				 and	std::find(explored.begin(), explored.end(), make_pair(row-1, col)) == explored.end()
+		if (((row-1)<max_rows and (row-1)>0)and ((map[row-1][col]!="=") and (map[row-1][col]!="|"))
+				 //and	std::find(current_path.begin(), current_path.end(), make_pair(row-1, col)) == current_path.end()
+				 //and	std::find(explored.begin(), explored.end(), make_pair(row-1, col)) == explored.end()
 				 and result!=true)
 		{
-			result=recursive_dls(make_pair(row-1, col), goal, current_level, limit, current_path);
+
+			if(depth_count_map[row-1][col] > current_level + 1)
+			{
+			result=recursive_dls(make_pair(row-1, col), goal, current_level+1, limit-1, current_path);
+			}
 
 		}
 
-		if (((col+1)<max_cols and (col+1)>0)and ((map[row][col+1]!="=") and (map[row][col+1]!="|") and (map[row][col+1]!="-"))
-				 and	std::find(current_path.begin(), current_path.end(), make_pair(row, col+1)) == current_path.end()
-				 and	std::find(explored.begin(), explored.end(), make_pair(row, col+1)) == explored.end()
+		if (((col+1)<max_cols and (col+1)>0)and ((map[row][col+1]!="=") and (map[row][col+1]!="|") )
+				 //and	std::find(current_path.begin(), current_path.end(), make_pair(row, col+1)) == current_path.end()
+				 //and	std::find(explored.begin(), explored.end(), make_pair(row, col+1)) == explored.end()
 				 and result!=true)
 		{
-			result=recursive_dls(make_pair(row, col+1), goal, current_level, limit, current_path);
+			if(depth_count_map[row][col+1] > current_level + 1)
+			{
+			result=recursive_dls(make_pair(row, col+1), goal, current_level+1, limit-1, current_path);
+			}
+
 
 		}
 
-		if (((col-1)<max_cols and (col-1)>0)and ((map[row][col-1]!="=") and (map[row][col-1]!="|") and (map[row][col-1]!="-"))
-				 and	std::find(current_path.begin(), current_path.end(), make_pair(row, col-1)) == current_path.end()
-				 and	std::find(explored.begin(), explored.end(), make_pair(row, col-1)) == explored.end()
+		if (((col-1)<max_cols and (col-1)>0)and ((map[row][col-1]!="=") and (map[row][col-1]!="|") )
+				 //and	std::find(current_path.begin(), current_path.end(), make_pair(row, col-1)) == current_path.end()
+				 //and	std::find(explored.begin(), explored.end(), make_pair(row, col-1)) == explored.end()
 				 and result!=true)
 		{
-			result=recursive_dls(make_pair(row, col-1), goal, current_level, limit, current_path);
 
+			if(depth_count_map[row][col-1] > current_level + 1)
+			{
+			result=recursive_dls(make_pair(row, col-1), goal, current_level+1, limit-1, current_path);
+			}
 		}
-
-	}
-
 
 	if (result==true)
 	{
@@ -198,6 +221,8 @@ bool Agent::depth_limited_seach(int limit)
     vector<pair<int,int>> current_path;
     pair<int,int> current_node;
 	int goal, current_level;
+	number_of_visited_nodes=0;
+	deepest_level=0;
 
 	//current_node=make_pair(initial_pos.first, initial_pos.second);
 	current_node=make_pair(initial_pos_set.first, initial_pos_set.second);
@@ -205,8 +230,9 @@ bool Agent::depth_limited_seach(int limit)
 	goal=goal_set;
     //goal=1;
 	current_level=0;
+	depth_count_map = vector<vector<int>>(map.size(), vector<int>(map[0].size(), max_limit));
 
-	bool result=recursive_dls(current_node, goal, current_level, limit, current_path);
+	bool result=recursive_dls(current_node, goal, current_level+1, limit, current_path);
 	if (result==true)
 		return true;
 	else
@@ -215,19 +241,31 @@ bool Agent::depth_limited_seach(int limit)
 
 void Agent::iterative_deepening_search()
 {
-    //TODO
-	int i;
+    //TO DO
+	int i=0;
 	bool result;
 
-	for (i=1; i<=max_limit; i++)
+	for (i=0; i<max_limit; i++)
 	{
-
-		result=depth_limited_seach(i);
+		result=depth_limited_seach(i+1);
 
 		if (result==true)
 		{
+			cout<<"Found!";
 			break;
 		}
+		else
+		{
+			//explored.clear();
+			continue;
+		}
+
+
+	}
+	if (i==max_limit)
+	{
+		cout<<"\n Goal "<<goal_set<<" not found";
+		flag_check=false;
 
 	}
 
@@ -236,7 +274,7 @@ void Agent::iterative_deepening_search()
 void Agent::print_final_results()
 {
     cout << "Deepest level reached: " << deepest_level  << endl;
-    cout << "Total of stored nodes: " << total_of_stored_nodes << endl;
+    //cout << "Total of stored nodes: " << total_of_stored_nodes << endl;
     cout << "Total of visited nodes: " << number_of_visited_nodes << endl;
 }
 
@@ -246,7 +284,7 @@ void Agent::backtrack_path(vector<pair<int,int>> current_path)
     vector<vector<string>> local_map = empty_map;
     
     pair<int,int> current_data; 
-    //TODO
+    //TO DO
     //Backtrace. Use the current path vector to set the path on the map.
     for (auto i = current_path.begin(); i != current_path.end(); i++)
     {
