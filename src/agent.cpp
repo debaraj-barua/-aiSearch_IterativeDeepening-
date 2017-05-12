@@ -78,7 +78,7 @@ void Agent::run()
     		for (int y=0;y<map[0].size();y++)
     		{
     			if (map[x][y]==std::to_string(goal_set))
-    				initial_pos_set=make_pair(x, y);
+    				initial_pos_set=make_pair(x, y); //set initial position as the current goal position
 
     		}
     	}
@@ -128,7 +128,7 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
     int max_cols = map[0].size();
     bool result=false;
 
-    //explored.push_back(current_node);
+
     depth_count_map[current_node.first][current_node.second] = current_level;
 	number_of_visited_nodes++;			//increase size of visited node as one node is being explored
 
@@ -156,11 +156,11 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 		 *********************************************************************/
 		current_path.push_back(current_node);
 		if (((row+1)<max_rows and (row+1)>0) and ((map[row+1][col]!="=") and (map[row+1][col]!="|"))
-			 //and	std::find(current_path.begin(), current_path.end(), make_pair(row+1, col)) == current_path.end()
-			 //and	std::find(explored.begin(), explored.end(), make_pair(row+1, col)) == explored.end()
 			 and result!=true)
 		{
 
+			//Explore nodes which are already explored if the current depth is less
+			//than the previous depth at which this node was reached
 			if(depth_count_map[row+1][col] > current_level + 1)
 			{
 			result=recursive_dls(make_pair(row+1, col), goal, current_level+1, limit-1, current_path);
@@ -168,11 +168,11 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 		}
 
 		if (((row-1)<max_rows and (row-1)>0)and ((map[row-1][col]!="=") and (map[row-1][col]!="|"))
-				 //and	std::find(current_path.begin(), current_path.end(), make_pair(row-1, col)) == current_path.end()
-				 //and	std::find(explored.begin(), explored.end(), make_pair(row-1, col)) == explored.end()
 				 and result!=true)
 		{
 
+			//Explore nodes which are already explored if the current depth is less
+			//than the previous depth at which this node was reached
 			if(depth_count_map[row-1][col] > current_level + 1)
 			{
 			result=recursive_dls(make_pair(row-1, col), goal, current_level+1, limit-1, current_path);
@@ -181,10 +181,11 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 		}
 
 		if (((col+1)<max_cols and (col+1)>0)and ((map[row][col+1]!="=") and (map[row][col+1]!="|") )
-				 //and	std::find(current_path.begin(), current_path.end(), make_pair(row, col+1)) == current_path.end()
-				 //and	std::find(explored.begin(), explored.end(), make_pair(row, col+1)) == explored.end()
 				 and result!=true)
 		{
+			//Explore nodes which are already explored if the current depth is less
+			//than the previous depth at which this node was reached
+
 			if(depth_count_map[row][col+1] > current_level + 1)
 			{
 			result=recursive_dls(make_pair(row, col+1), goal, current_level+1, limit-1, current_path);
@@ -194,10 +195,10 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 		}
 
 		if (((col-1)<max_cols and (col-1)>0)and ((map[row][col-1]!="=") and (map[row][col-1]!="|") )
-				 //and	std::find(current_path.begin(), current_path.end(), make_pair(row, col-1)) == current_path.end()
-				 //and	std::find(explored.begin(), explored.end(), make_pair(row, col-1)) == explored.end()
 				 and result!=true)
 		{
+			//Explore nodes which are already explored if the current depth is less
+			//than the previous depth at which this node was reached
 
 			if(depth_count_map[row][col-1] > current_level + 1)
 			{
@@ -225,11 +226,10 @@ bool Agent::depth_limited_seach(int limit)
 	number_of_visited_nodes=0;
 	deepest_level=0;
 
-	//current_node=make_pair(initial_pos.first, initial_pos.second);
 	current_node=make_pair(initial_pos_set.first, initial_pos_set.second);
     current_path.push_back(current_node);
 	goal=goal_set;
-    //goal=1;
+
 	current_level=0;
 	depth_count_map = vector<vector<int>>(map.size(), vector<int>(map[0].size(), max_limit));
 
@@ -257,7 +257,6 @@ void Agent::iterative_deepening_search()
 		}
 		else
 		{
-			//explored.clear();
 			continue;
 		}
 
