@@ -163,7 +163,7 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 			//than the previous depth at which this node was reached
 			if(depth_count_map[row+1][col] > current_level + 1)
 			{
-			result=recursive_dls(make_pair(row+1, col), goal, current_level+1, limit-1, current_path);
+			result=recursive_dls(make_pair(row+1, col), goal, current_level+1, limit, current_path);
 			}
 		}
 
@@ -175,7 +175,7 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 			//than the previous depth at which this node was reached
 			if(depth_count_map[row-1][col] > current_level + 1)
 			{
-			result=recursive_dls(make_pair(row-1, col), goal, current_level+1, limit-1, current_path);
+			result=recursive_dls(make_pair(row-1, col), goal, current_level+1, limit, current_path);
 			}
 
 		}
@@ -188,7 +188,7 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 
 			if(depth_count_map[row][col+1] > current_level + 1)
 			{
-			result=recursive_dls(make_pair(row, col+1), goal, current_level+1, limit-1, current_path);
+			result=recursive_dls(make_pair(row, col+1), goal, current_level+1, limit, current_path);
 			}
 
 
@@ -202,7 +202,7 @@ bool Agent::recursive_dls(pair<int,int> current_node, int goal, int current_leve
 
 			if(depth_count_map[row][col-1] > current_level + 1)
 			{
-			result=recursive_dls(make_pair(row, col-1), goal, current_level+1, limit-1, current_path);
+			result=recursive_dls(make_pair(row, col-1), goal, current_level+1, limit, current_path);
 			}
 		}
 
