@@ -50,7 +50,7 @@ Agent::~Agent()
 
 void Agent::run()
 {
-	//explored.clear();
+
 	flag_check=true;
     cout << "Running IDFS " << endl;
 	sleep(1);
@@ -61,18 +61,18 @@ void Agent::run()
 	//Loop until all goals are found
     for (int i=0; i <number_of_goals;i++)
     {
-    	//explored.clear();
-
     	goal_set=goal_set+1;
     	cout<<"\n Looking for Goal Number: "<<goal_set<<"\n";
     	print_map(map);
     	iterative_deepening_search();
     	if (flag_check==false)
     	{
-			//goal_set=goal_set+1;
-			i=i-1;
+			i=i-1; //set repeat for same initial node if last node was not found
 			flag_check=true;
+			continue;
     	}
+    	else
+    	{
     	for (int x=0; x<map.size();x++)
     	{
     		for (int y=0;y<map[0].size();y++)
@@ -86,6 +86,7 @@ void Agent::run()
 		cout << "Press Enter to Continue" << endl;
 		cin.ignore();
 		cin.get();
+    	}
     }
 
 //	iterative_deepening_search();
